@@ -181,12 +181,14 @@ module Octokit
         opts[:query][:per_page] ||=  @per_page || (@auto_paginate ? 100 : nil)
       end
 
+      next_opts = {}
+      next_opts[:headers] = opts[:headers] || {}
       data = request(:get, url, opts)
 
-      if @auto_paginate && data.is_a?(Array)
+      if @auto_paginate && data.items.is_a?(Array)
         while @last_response.rels[:next] && rate_limit.remaining > 0
-          @last_response = @last_response.rels[:next].get
-          data.concat(@last_response.data) if @last_response.data.is_a?(Array)
+          @last_response = @last_response.rels[:next].get(next_opts)
+          data.items.concat(@last_response.data.items) if @last_response.data.items.is_a?(Array)
         end
 
       end
